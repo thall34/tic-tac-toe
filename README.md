@@ -12,4 +12,10 @@ Add function to check for tie game and add round counter to play function so the
 Add function to check if cell is full already before player selects it, if it sees that it is full then
 it prompts the same player to pick a different cell
 
-Still need to re-work functions into factories to share variables and to encapsulate the whole game in a module
+Nov 13, 2025
+Found that check tie game and check cells functions were redundant and re worked functions around it
+Created a new playRound function to clean up the playGame function
+Encapsulated functions into 3 total factories, one that creates players, one that creates the board
+and the final one that runs through the gameplay
+
+Still need to connect Javascript to HTML/CSS
