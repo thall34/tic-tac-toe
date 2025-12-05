@@ -1,72 +1,83 @@
-function playerFactory() {
-    const players = [];
-
-    function createPlayer(name, marker) {
-        const player = {
-            name: name,
-            marker: marker,
-        };
-
-        players.push(player);
-    };
-
-    return {
-        players: players,
-        createPlayer: createPlayer
-    };
-};
+function createPlayer(name, marker) { return { name, marker } }
 
 function gameBoardFactory() {
-    const container = document.getElementById("container");
-
     const grid = [
         ["0", "0", "0"],
         ["0", "0", "0"],
         ["0", "0", "0"]
     ];
-
-    function printGrid() {
-        container.innerHTML = "";
-        for (let row = 0; row < grid.length; row++) {
-            const rowDiv = document.createElement("div");
-            rowDiv.classList.add("row");
-            for (let col = 0; col < grid[row].length; col++) {
-                const cell = document.createElement("div");
-                cell.classList.add("cell");
-                cell.dataset.row = row;
-                cell.dataset.col = col;
-                cell.textContent = "";
-
-                rowDiv.appendChild(cell);
-            };
-            container.appendChild(rowDiv);
-        };
-    };
-
-    return {
-        grid: grid,
-        printGrid: printGrid
+    
+    function reset(){
+        const cells = document.querySelectorAll(".cell");
+        
+        cells.forEach((cell)=>{
+            const rowIndices = Number(cell.dataset.row);
+            const colIndices = Number(cell.dataset.col);
+            
+            cell.textContent = "";
+            grid[rowIndices][colIndices] = "0";
+        });
     }
-};
+    
+    return {
+        grid,
+        reset
+    }
+}
 
-function gameFlow(playerX, playerO) {
-    const getPlayer = playerFactory();
+function Game(playerX, playerO) {
     const gameBoard = gameBoardFactory();
     const grid = gameBoard.grid;
-    const player1 = getPlayer.createPlayer(playerX, "X", "1");
-    const player2 = getPlayer.createPlayer(playerO, "O", "2");
+    const display = document.getElementById("display");
+    const cells = document.querySelectorAll(".cell");
+    
+    const player1 = createPlayer(playerX, "X");
+    const player2 = createPlayer(playerO, "O");
 
-    let activePlayer = getPlayer.players[0];
+    let activePlayer = player1;
     let winCondition = false;
     let roundCount = 0;
+    
+    function tileClickHandler(event){
+        const clickedCell = event.target;
+        const row = Number(clickedCell.dataset.row);
+        const col = Number(clickedCell.dataset.col);
+
+        clickedCell.style.setProperty("--cell-hover-color", "black");
+        clickedCell.style.cursor = "default";
+
+        if (winCondition === false && roundCount < 9) {
+            if (grid[row][col] !== "0") {
+                alert("already filled");
+            } else {
+                clickedCell.textContent = activePlayer.marker;
+                grid[row][col] = activePlayer.marker;
+
+                checkWin(activePlayer);
+                roundCount += 1;
+
+                if (winCondition === true) {
+                    display.textContent = `${activePlayer.name} is the Winner!`;
+                    // we don't want to reset the game because we want player to see who won
+                    // but we also don't want them to click any more tiles 
+                    removeTileListeners(); 
+                } else if (winCondition === false && roundCount === 9) {
+                    display.textContent = "Tie Game!";
+                } else {
+                    playerSwitch(activePlayer);
+                    display.textContent = `${activePlayer.name} please pick a cell`;
+                }
+            }
+        }
+    }
 
     function playerSwitch() {
-        if (activePlayer === getPlayer.players[0]) {
-            activePlayer = getPlayer.players[1];
-        } else if (activePlayer === getPlayer.players[1]) {
-            activePlayer = getPlayer.players[0];
-        };
-    };
+        if (activePlayer === player1) {
+            activePlayer = player2;
+        } else if (activePlayer === player2) {
+            activePlayer = player1;
+        }
+    }
 
     function checkWin(player) {
         // checks horizontal
@@ -88,87 +99,78 @@ function gameFlow(playerX, playerO) {
             winCondition = true;
         } else if (grid[2][0] === player.marker && grid[1][1] === player.marker && grid[0][2] === player.marker) {
             winCondition = true;
-        };
-    };
+        }
+    }
+    
+    function removeTileListeners(){
+        cells.forEach((cell)=> {
+            cell.removeEventListener("click", tileClickHandler);
+            cell.style.setProperty("--cell-hover-color", "black");
+            cell.style.cursor = "default";
+        });
+    }
+    
+    function updateNames(NewPlayer1Name, newPlayer2Name){
+        player1.name = NewPlayer1Name;
+        player2.name = newPlayer2Name;
+    }
+    
+    function reset(){
+        display.textContent = `Please input your names below`;
+        activePlayer = player1;
+        winCondition = false;
+        roundCount = 0;
+        gameBoard.reset();
+        removeTileListeners();
+    }
+    
 
-    function fullGame() {
-        const cells = document.querySelectorAll("div.cell");
+    function startMatch() {
         const display = document.getElementById("display");
-
+        
         display.textContent = `${activePlayer.name} please pick a cell`
 
-        cells.forEach(cell => {
-            cell.addEventListener("click", (event) => {
-                const clickedCell = event.target;
-                const row = parseInt(clickedCell.dataset.row);
-                const col = parseInt(clickedCell.dataset.col);
-
-                if (winCondition === false && roundCount < 9) {
-                    if (grid[row][col] !== "0") {
-                        alert("already filled");
-                    } else {
-                        clickedCell.textContent = activePlayer.marker;
-                        grid[row][col] = activePlayer.marker;
-
-                        checkWin(activePlayer);
-                        roundCount += 1;
-
-                        if (winCondition === true) {
-                            display.textContent = `${activePlayer.name} is the Winner!`;
-                        } else if (winCondition === false && roundCount === 9) {
-                            display.textContent = "Tie Game!";
-                        } else {
-                            playerSwitch(activePlayer);
-                            display.textContent = `${activePlayer.name} please pick a cell`;
-                        };
-                    };
-                };
-            });
+        cells.forEach((cell, i) => {
+            const rowIndices = Math.floor(i / 3);
+            const colIndices = Math.floor(i % 3);
+            
+            cell.style.setProperty("--cell-hover-color", "rgb(47, 206, 47)");
+            cell.style.cursor = "pointer";
+            cell.dataset.row = String(rowIndices);
+            cell.dataset.col = String(colIndices);
+            cell.addEventListener("click", tileClickHandler);
         });
-    };
+    }
 
     return {
-        fullGame: fullGame,
+        startMatch,
+        reset,
+        updateNames
     }
-};
+}
 
-function displayGame() {
+function startGame() {
     const button = document.getElementById("button");
     const player1Input = document.getElementById("player1");
     const player2Input = document.getElementById("player2");
-    const display = document.getElementById("display");
-    const board = gameBoardFactory();
-    const players = playerFactory();
+    const game = Game(player1Input.value, player2Input.value);
 
-
-    board.printGrid();
-
+    button.style.cursor = "pointer";
+    
     button.addEventListener("click", () => {
         if (button.classList.contains("start")) {
-            const game = gameFlow(player1Input.value, player2Input.value);
-            game.fullGame();
+            game.updateNames(player1Input.value, player2Input.value);
+            game.startMatch();
             button.classList.remove("start");
             button.classList.add("reset");
             button.textContent = "Reset";
         } else if (button.classList.contains("reset")) {
-            const game = gameFlow();
-            board.grid = [
-                ["0", "0", "0"],
-                ["0", "0", "0"],
-                ["0", "0", "0"]
-            ];
-            board.printGrid();
-            players.players = [];
-            game.winCondition = false;
-            game.roundCount = 0;
+            game.reset();
             button.classList.remove("reset");
             button.classList.add("start");
             button.textContent = "Start";
-            player1Input.value = "";
-            player2Input.value = "";
-            display.textContent = `Please input your names below`;
-        };
+        }
     });
-};
+}
 
-displayGame();
+startGame(); // we need to remove the event listeners, for this we have two options: 1) use a single listenre on the container then use event.target to get the actual element being clicked 
