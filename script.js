@@ -1,8 +1,6 @@
 function createPlayer(name, marker) { return { name, marker } }
 
 function gameBoardFactory() {
-    const container = document.getElementById("container");
-
     const grid = [
         ["0", "0", "0"],
         ["0", "0", "0"],
@@ -12,7 +10,7 @@ function gameBoardFactory() {
     function reset(){
         const cells = document.querySelectorAll(".cell");
         
-        cells.forEach((cell, i)=>{
+        cells.forEach((cell)=>{
             const rowIndices = Number(cell.dataset.row);
             const colIndices = Number(cell.dataset.col);
             
@@ -45,6 +43,7 @@ function Game(playerX, playerO) {
         const row = Number(clickedCell.dataset.row);
         const col = Number(clickedCell.dataset.col);
 
+        clickedCell.style.setProperty("--cell-hover-color", "black");
         clickedCell.style.cursor = "default";
 
         if (winCondition === false && roundCount < 9) {
@@ -59,6 +58,9 @@ function Game(playerX, playerO) {
 
                 if (winCondition === true) {
                     display.textContent = `${activePlayer.name} is the Winner!`;
+                    // we don't want to reset the game because we want player to see who won
+                    // but we also don't want them to click any more tiles 
+                    removeTileListeners(); 
                 } else if (winCondition === false && roundCount === 9) {
                     display.textContent = "Tie Game!";
                 } else {
@@ -101,8 +103,9 @@ function Game(playerX, playerO) {
     }
     
     function removeTileListeners(){
-        cells.forEach((cell, i)=> {
+        cells.forEach((cell)=> {
             cell.removeEventListener("click", tileClickHandler);
+            cell.style.setProperty("--cell-hover-color", "black");
             cell.style.cursor = "default";
         });
     }
@@ -130,7 +133,8 @@ function Game(playerX, playerO) {
         cells.forEach((cell, i) => {
             const rowIndices = Math.floor(i / 3);
             const colIndices = Math.floor(i % 3);
-
+            
+            cell.style.setProperty("--cell-hover-color", "rgb(47, 206, 47)");
             cell.style.cursor = "pointer";
             cell.dataset.row = String(rowIndices);
             cell.dataset.col = String(colIndices);
